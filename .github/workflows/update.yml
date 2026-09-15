@@ -1,0 +1,45 @@
+name: Aggiorna calendario UniTO
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "17 */6 * * *"
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Configura Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.x"
+
+      - name: Filtra il calendario UniTO
+        env:
+          UNTO_ICAL_URL: ${{ secrets.UNTO_ICAL_URL }}
+        run: python filter_calendar.py
+
+      - name: Configura GitHub Pages
+        uses: actions/configure-pages@v5
+
+      - name: Prepara il sito
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: "docs"
+
+      - name: Pubblica su GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
